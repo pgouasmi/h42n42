@@ -1,0 +1,11 @@
+(executable
+ (public_name h42n42)
+ (name main)
+ (modes byte)
+ (libraries js_of_ocaml js_of_ocaml-lwt)
+ (preprocess (pps js_of_ocaml-ppx)))
+
+(rule
+ (target main.js)
+ (deps main.bc)
+ (action (run js_of_ocaml %{deps})))

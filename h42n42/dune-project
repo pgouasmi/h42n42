@@ -1,0 +1,7 @@
+(lang dune 3.0)
+
+(name h42n42)
+
+(package
+ (name h42n42)
+ (depends ocaml dune js_of_ocaml js_of_ocaml-ppx js_of_ocaml-lwt))
