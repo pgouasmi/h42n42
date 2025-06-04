@@ -2,8 +2,8 @@
  (public_name h42n42)
  (name main)
  (modes byte)
- (libraries js_of_ocaml js_of_ocaml-lwt)
- (preprocess (pps js_of_ocaml-ppx)))
+ (libraries js_of_ocaml js_of_ocaml-lwt js_of_ocaml-tyxml)
+ (preprocess (pps js_of_ocaml-ppx tyxml-ppx)))
 
 (rule
  (target main.js)
