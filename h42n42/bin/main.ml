@@ -1,6 +1,8 @@
 open Js_of_ocaml
+(* open Js_of_ocaml.Console *)
 open Js_of_ocaml_tyxml.Tyxml_js.Html
 open Js_of_ocaml_tyxml.Tyxml_js.To_dom
+(* open Unix *)
 
 let global_creets = ref []
 
@@ -42,6 +44,9 @@ let init_creets count =
 
 let draw_creets ctx =
   List.iter (fun creet -> creet#draw ctx) !global_creets
+
+let move_creets () =
+  List.iter (fun creet -> creet#update 0.1) !global_creets
   
 
 let create_page () =
@@ -73,13 +78,45 @@ let create_page () =
   Canvas.clear_rect ctx;
   ctx##.fillStyle := Js.string "#f0f0f0";
   Canvas.fill_rect ctx;
-  init_creets 5;
+  init_creets 100;
   draw_creets ctx;
+
+
+  (* let time = Unix.gettimeofday () in
+  ignore time;
+  (* Unix.sleepf 3.0; *)
+  print_string "slept 3";
+  method random_angle =
+
+  for i = 0 to 10000 do 
+    move_creets;
+    draw_creets ctx;
+    ignore i 
+  done; *)
+  (* draw_creets ctx; *)
   ()
+
+  let rec game_loop () =
+    (* Printf.printf "In game loop\n%!"; *)
+    let ctx = get_canvas_context () in
+  
+  (* Clear canvas *)
+    Canvas.clear_rect ctx;
+    ctx##.fillStyle := Js.string "#f0f0f0";
+    Canvas.fill_rect ctx;
+    
+    (* Update et draw *)
+    move_creets (); (* ~60 FPS *)
+    draw_creets ctx;
+    
+    ignore (Dom_html.window##requestAnimationFrame
+      (Js.wrap_callback (fun _ -> game_loop ())));
+      ()
 
 let () =
   Dom_html.window##.onload := Dom_html.handler (fun _ ->
     Random.self_init ();
     create_page () ;
+    game_loop () ;
     Js._false
   )
