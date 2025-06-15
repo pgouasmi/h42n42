@@ -225,7 +225,7 @@ class creet (initial_speed : float) = object (self)
     if is_immune || other_creet#is_immune then false
     else if self#collides_with other_creet && status != "healthy" && status != "dead" && status != "dead_deflating" && other_creet#get_status = "healthy" then (
       let rdm = Random.int 100 in
-      if rdm < 2 then (
+      if rdm < 10 then (
         let rdm2 = Random.int 100 in
         if rdm2 < 10 then
           other_creet#set_status "berserk"
@@ -274,26 +274,64 @@ class creet (initial_speed : float) = object (self)
       self#update_dom_position ()
     )
 
+  method update_size () =
+    if diameter > 60.0 then (
+      diameter <- diameter -. 0.3;
+      self#update_dom_size ()
+    );
+    if diameter < 60.0 then (
+      diameter <- diameter +. 0.3;
+      self#update_dom_size ()
+    )
+
+  method find_nearest_healthy_creet creets_list =
+    let healthy_creets = List.filter (fun c -> 
+      c#get_status = "healthy" && c#is_alive && c != (self :> creet)
+    ) creets_list in
+    
+    match healthy_creets with
+    | [] -> None
+    | _ ->
+        let distances = List.map (fun creet ->
+          let dx = x -. creet#get_x in
+          let dy = y -. creet#get_y in
+          let distance = sqrt (dx *. dx +. dy *. dy) in
+          (creet, distance)
+        ) healthy_creets in
+        
+        let sorted = List.sort (fun (_, d1) (_, d2) -> compare d1 d2) distances in
+        match sorted with
+        | (nearest, _) :: _ -> Some nearest
+        | [] -> None
+  
+  method chase_target target_creet =
+    let target_x = target_creet#get_x in
+    let target_y = target_creet#get_y in
+    let dx = target_x -. x in
+    let dy = target_y -. y in
+    let distance = sqrt (dx *. dx +. dy *. dy) in
+    
+    if distance > 0.0 then (
+      let current_speed = self#get_effective_speed () in
+      vx <- (dx /. distance) *. current_speed;
+      vy <- (dy /. distance) *. current_speed
+    )
+  
+  method update_chase_behavior creets_list =
+    if status = "mean" && not is_dragged then (
+      match self#find_nearest_healthy_creet creets_list with
+      | Some target -> self#chase_target target
+      | None -> ()
+    )
+
   method autonomous_behavior () =
     match status with
     | "healthy" ->
         self#check_infection_zone ();
-        if Random.float 1.0 < 0.05 then (
-          let angle_change = (Random.float 0.4) -. 0.2 in
-          let current_angle = atan2 vy vx in
-          let new_angle = current_angle +. angle_change in
-          let current_speed = self#get_effective_speed () in
-          vx <- current_speed *. cos new_angle;
-          vy <- current_speed *. sin new_angle
+        if Random.float 1.0 < 0.005 then (
+          self#random_angle
         );
-        if diameter > 60.0 then (
-          diameter <- diameter -. 0.1;
-          self#update_dom_size ()
-        );
-        if diameter < 60.0 then (
-          diameter <- diameter +. 0.1;
-          self#update_dom_size ()
-        )
+        self#update_size ()
 
     | "dead" ->
         vx <- 0.0;
@@ -304,6 +342,9 @@ class creet (initial_speed : float) = object (self)
     | "berserk" ->
         if diameter <= max_diameter then (
           diameter <- diameter +. 0.1;
+          if Random.float 1.0 < 0.005 then (
+            self#random_angle
+          );
           self#update_dom_size ()
         ) else (
           self#set_status "dead_deflating"
@@ -321,10 +362,19 @@ class creet (initial_speed : float) = object (self)
         )
 
     | "mean" -> 
+        if Random.float 1.0 < 0.005 then (
+          self#random_angle
+        );
         if diameter > 51.0 then (
           diameter <- 60.0 *. 0.85;
           self#update_dom_size ()
         )
+
+    | "sick" ->
+      if Random.float 1.0 < 0.005 then (
+        self#random_angle
+      );
+      self#update_size ()
     
     | _ -> ()
 

@@ -3,6 +3,7 @@
  (name main)
  (modes byte)
  (libraries js_of_ocaml js_of_ocaml-lwt js_of_ocaml-tyxml unix)
+ (modules main ui game_systems game_state game_config game_events creet)
  (preprocess (pps js_of_ocaml-ppx tyxml-ppx)))
 
 (rule
